@@ -1,0 +1,101 @@
+﻿@page "/AddCustomer"
+@using MyFirstBlazorServerApp.Models;
+@using MyFirstBlazorServerApp.Data;
+
+<h3>Customers</h3>
+
+@if (customersList == null)
+{
+    <p>
+        <em>No customers found...</em>
+    </p>
+}
+else
+{
+    <input type="button" value="New Customer" @onclick="() => this.Customer = new Customers()" />
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>CustomerId</th>
+                <th>Names</th>
+                <th>Email</th>
+                <th>LastDate</th>
+                <th>Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var customer in customersList)
+            {
+                <tr>
+                    <td>@customer.CustomerId</td>
+                    <td>@customer.Names</td>
+                    <td>@customer.Email</td>
+                    <td>@customer.LastDate.ToString("dd/MM/yyyy")</td>
+                    <td>@customer.Amount.ToString("N2")</td>
+                    <td>
+                        <input type="button" value="Select" @onclick="() => this.Customer = customer" />
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<EditForm Model="@Customer" OnValidSubmit="@SaveCustomer">
+    <DataAnnotationsValidator />
+
+    <div class="form-group">
+        <label for="Names" class="control-label">Names</label>
+        <InputText id="Names" @bind-Value="Customer.Names" class="form-control" />
+        <ValidationMessage For="@(() => Customer.Names)" />
+    </div>
+    <div class="form-group">
+        <label for="Email" class="control-label">Email</label>
+        <InputText @bind-Value="Customer.Email" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label for="LastDate" class="control-label">LastDate</label>
+        <InputDate id="LastDate" @bind-Value="Customer.LastDate" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label for="Amount" class="control-label">Amount</label>
+        <InputNumber id="Amount" @bind-Value="Customer.Amount" class="form-control" />
+    </div>
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary">Save</button>
+    </div>
+
+    <ValidationSummary />
+
+</EditForm>
+
+@code {
+    private IList<Customers> customersList;
+    private Customers Customer = new Customers();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetCustomersAsync();
+    }
+
+    private async Task GetCustomersAsync()
+    {
+        BaseRepository<Customers> customerRepository = new BaseRepository<Customers>();
+        this.customersList = await customerRepository.ListAsync();
+    }
+
+    private async void SaveCustomer()
+    {
+        BaseRepository<Customers> customerRepository = new BaseRepository<Customers>();
+
+        if (customerRepository.Insert(this.Customer))
+        {
+            await GetCustomersAsync();
+            this.Customer = new Customers();
+        }
+        //else toaster "Something happened, we couldn't save the form :("
+
+    }
+
+}
